@@ -14,12 +14,15 @@ from app.routes.member import router as members_router
 
 from app.db.base import Base
 from app.db.session import engine
+import os
 
 app = FastAPI()
 
+allow_origins=[os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")],
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
