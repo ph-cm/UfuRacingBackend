@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -6,6 +7,7 @@ from app.models.sponsor import Sponsor
 from app.schemas.sponsor import SponsorCreate, SponsorResponse
 from app.core.security import require_admin
 from pydantic import BaseModel
+import json
 
 router = APIRouter(prefix="/sponsors", tags=["Sponsors"])
 
@@ -20,7 +22,13 @@ def list_sponsors(db: Session = Depends(get_db), active_only: bool = True):
     q = db.query(Sponsor)
     if active_only:
         q = q.filter(Sponsor.active == True)  # noqa: E712
-    return q.order_by(Sponsor.id.desc()).all()
+    sponsors = q.order_by(Sponsor.id.desc()).all()
+    data = [SponsorResponse.model_validate(s).model_dump() for s in sponsors]
+    return Response(
+        content=json.dumps(data),
+        media_type="application/json",
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+    )
 
 @router.post("", response_model=SponsorResponse)
 def create_sponsor(data: SponsorCreate, db: Session = Depends(get_db), current_user=Depends(require_admin)):

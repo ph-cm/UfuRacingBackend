@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from app.db.session import get_db
 from app.models.highlight import Highlight
 from app.core.security import require_admin
@@ -17,12 +18,27 @@ class HighlightUpdate(BaseModel):
     area_photo: str | None = None
 
 
-@router.get("/")
+class HighlightResponse(BaseModel):
+    id: int
+    member_name: str
+    member_role: str
+    member_photo: str | None = None
+    area_name: str
+    area_desc: str
+    area_photo: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+@router.get("/", response_model=HighlightResponse)
 def get_highlight(db: Session = Depends(get_db)):
-    return db.query(Highlight).first()
+    row = db.query(Highlight).first()
+    if not row:
+        return JSONResponse(status_code=404, content={"detail": "Nenhum destaque encontrado"})
+    return row
 
 
-@router.put("/")
+@router.put("/", response_model=HighlightResponse)
 def update_highlight(data: HighlightUpdate, db: Session = Depends(get_db), current_user=Depends(require_admin)):
     row = db.query(Highlight).first()
     if row:
