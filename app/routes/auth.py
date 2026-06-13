@@ -40,3 +40,39 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def me(current_user=Depends(get_current_user)):
     return current_user
+
+# ── Endpoints no formato esperado pelo frontend (área do membro) ────────────────
+
+@router.post("/member/login")
+def member_login(data: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+
+    if not user or not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Conta desativada")
+
+    token = create_access_token({"sub": str(user.id), "role": user.role})
+    return {
+        "token": token,
+        "member": {
+            "id": user.id,
+            "name": user.name,
+            "role": user.role,
+            "team": user.team or "",
+            "photo_url": None,
+            "email": user.email,
+        },
+    }
+
+@router.get("/member/me")
+def member_me(current_user=Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "role": current_user.role,
+        "team": current_user.team or "",
+        "photo_url": None,
+        "email": current_user.email,
+    }

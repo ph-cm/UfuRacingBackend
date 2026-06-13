@@ -10,5 +10,6 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String(50), nullable=False, default="user")  # "admin" ou "user"
+    team = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

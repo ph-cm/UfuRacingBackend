@@ -25,6 +25,7 @@ admin = User(
     email="admin@ufuracing.com",
     hashed_password=hash_password("admin123"),
     role="admin",
+    team="Gestão",
     is_active=True,
 )
 user1 = User(
@@ -32,6 +33,7 @@ user1 = User(
     email="pedro@ufuracing.com",
     hashed_password=hash_password("user123"),
     role="user",
+    team="Powertrain",
     is_active=True,
 )
 user2 = User(
@@ -39,6 +41,7 @@ user2 = User(
     email="ana@ufuracing.com",
     hashed_password=hash_password("user123"),
     role="user",
+    team="Chassis",
     is_active=True,
 )
 db.add_all([admin, user1, user2])
