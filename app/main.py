@@ -27,6 +27,9 @@ async def trust_coolify_proxy(request: Request, call_next):
     if request.headers.get("x-forwarded-proto") == "https":
         request.scope["scheme"] = "https"
     response = await call_next(request)
+    # Prevent any proxy/CDN from caching API responses
+    if not request.url.path.startswith("/static") and not request.url.path.startswith("/images"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
     return response
 
 origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
