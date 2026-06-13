@@ -14,6 +14,7 @@ from app.routes.forum import router as forum_router
 
 from app.db.base import Base
 from app.db.session import engine
+from app.models import image as _image_model  # noqa: F401 — ensures table is created
 import os
 
 app = FastAPI()

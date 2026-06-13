@@ -1,40 +1,51 @@
 import os
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request
-from pathlib import Path
-from uuid import uuid4
+from fastapi.responses import Response
+from sqlalchemy.orm import Session
+
 from app.core.security import get_current_user
+from app.db.session import get_db
+from app.models.image import Image
 
-router = APIRouter(prefix="/upload", tags=["Upload"])
+router = APIRouter(tags=["Upload"])
 
-ALLOWED_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+ALLOWED_TYPES = {
+    "image/png":  ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+    "image/gif":  ".gif",
+}
 MAX_SIZE_MB = 5
-
-UPLOAD_DIR = Path("static/uploads")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
 BASE_URL = os.getenv("BASE_URL", "")
 
-@router.post("")
+
+@router.post("/upload")
 async def upload_image(
     request: Request,
     file: UploadFile = File(...),
     current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="Arquivo inválido")
+    content_type = file.content_type or ""
+    if content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail=f"Tipo não permitido: {content_type}")
 
-    ext = Path(file.filename).suffix.lower()
-    if ext not in ALLOWED_EXTS:
-        raise HTTPException(status_code=400, detail=f"Extensão não permitida: {ext}")
-
-    content = await file.read()
-    size_mb = len(content) / (1024 * 1024)
-    if size_mb > MAX_SIZE_MB:
+    data = await file.read()
+    if len(data) / (1024 * 1024) > MAX_SIZE_MB:
         raise HTTPException(status_code=400, detail=f"Arquivo acima de {MAX_SIZE_MB}MB")
 
-    name = f"{uuid4().hex}{ext}"
-    dest = UPLOAD_DIR / name
-    dest.write_bytes(content)
+    img = Image(content_type=content_type, data=data)
+    db.add(img)
+    db.commit()
+    db.refresh(img)
 
-    base = BASE_URL.rstrip("/") if BASE_URL else str(request.base_url).rstrip("/")
-    return {"url": f"{base}/static/uploads/{name}"}
+    base = (BASE_URL.rstrip("/") if BASE_URL else str(request.base_url).rstrip("/"))
+    return {"url": f"{base}/images/{img.id}"}
+
+
+@router.get("/images/{image_id}")
+def serve_image(image_id: int, db: Session = Depends(get_db)):
+    img = db.query(Image).filter(Image.id == image_id).first()
+    if not img:
+        raise HTTPException(status_code=404, detail="Imagem não encontrada")
+    return Response(content=img.data, media_type=img.content_type)
