@@ -5,6 +5,7 @@ from slugify import slugify
 from app.db.session import get_db
 from app.models.news import News
 from app.schemas.news import NewsCreate, NewsUpdate, NewsResponse
+from app.core.security import require_admin
 
 router = APIRouter(prefix="/news", tags=["News"])
 
@@ -31,7 +32,6 @@ def list_news(
     return q.order_by(News.created_at.desc()).offset(skip).limit(limit).all()
 
 
-# ✅ IMPORTANTE: este endpoint bate com seu FRONT que usa /news/{id}
 @router.get("/{news_id}", response_model=NewsResponse)
 def get_news_by_id(news_id: int, db: Session = Depends(get_db)):
     news = db.query(News).filter(News.id == news_id).first()
@@ -40,7 +40,6 @@ def get_news_by_id(news_id: int, db: Session = Depends(get_db)):
     return news
 
 
-# 🔥 opcional (pro futuro): buscar por slug sem conflitar com /{id}
 @router.get("/slug/{slug}", response_model=NewsResponse)
 def get_news_by_slug(slug: str, db: Session = Depends(get_db)):
     news = db.query(News).filter(News.slug == slug).first()
@@ -50,7 +49,7 @@ def get_news_by_slug(slug: str, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=NewsResponse)
-def create_news(data: NewsCreate, db: Session = Depends(get_db)):
+def create_news(data: NewsCreate, db: Session = Depends(get_db), current_user=Depends(require_admin)):
     base_slug = slugify(data.title)
     slug = _unique_slug(db, base_slug)
 
@@ -72,7 +71,7 @@ def create_news(data: NewsCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{news_id}", response_model=NewsResponse)
-def update_news(news_id: int, data: NewsUpdate, db: Session = Depends(get_db)):
+def update_news(news_id: int, data: NewsUpdate, db: Session = Depends(get_db), current_user=Depends(require_admin)):
     news = db.query(News).filter(News.id == news_id).first()
     if not news:
         raise HTTPException(status_code=404, detail="Notícia não encontrada")
@@ -82,7 +81,6 @@ def update_news(news_id: int, data: NewsUpdate, db: Session = Depends(get_db)):
         news.slug = _unique_slug(db, base_slug)
         news.title = data.title
 
-    # atualiza campos opcionais
     for field in ["summary", "content", "image", "author", "category", "published"]:
         value = getattr(data, field)
         if value is not None:
@@ -94,7 +92,7 @@ def update_news(news_id: int, data: NewsUpdate, db: Session = Depends(get_db)):
 
 
 @router.delete("/{news_id}")
-def delete_news(news_id: int, db: Session = Depends(get_db)):
+def delete_news(news_id: int, db: Session = Depends(get_db), current_user=Depends(require_admin)):
     news = db.query(News).filter(News.id == news_id).first()
     if not news:
         raise HTTPException(status_code=404, detail="Notícia não encontrada")

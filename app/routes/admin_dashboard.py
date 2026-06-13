@@ -4,14 +4,15 @@ from sqlalchemy import func
 
 from app.db.session import get_db
 from app.models.news import News
-from app.models.sponsor import Sponsor  # ajuste se seu model tiver outro nome
-from app.models.sponsor_contact import SponsorContact  # ajuste se seu model tiver outro nome
-from app.models.member import Member  # vamos criar abaixo
+from app.models.sponsor import Sponsor
+from app.models.sponsor_contact import SponsorContact
+from app.models.member import Member
+from app.core.security import require_admin
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 @router.get("/dashboard")
-def dashboard(db: Session = Depends(get_db)):
+def dashboard(db: Session = Depends(get_db), current_user=Depends(require_admin)):
     news_count = db.query(func.count(News.id)).scalar() or 0
     sponsors_count = db.query(func.count(Sponsor.id)).scalar() or 0
     members_count = db.query(func.count(Member.id)).scalar() or 0
