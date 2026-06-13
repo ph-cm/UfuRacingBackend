@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -17,6 +17,16 @@ from app.db.session import engine
 import os
 
 app = FastAPI()
+
+@app.middleware("http")
+async def trust_coolify_proxy(request: Request, call_next):
+    # O Coolify avisa o FastAPI se a requisição original era HTTPS através desse header
+    if request.headers.get("x-forwarded-proto") == "https":
+        # Força o FastAPI a entender que o protocolo interno também é HTTPS
+        request.scope["scheme"] = "https"
+    
+    response = await call_next(request)
+    return response
 
 # Divide a string em uma lista, separando por vírgula
 origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
