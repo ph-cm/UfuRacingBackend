@@ -58,3 +58,19 @@ app.include_router(members_router)
 app.include_router(forum_router)
 
 Base.metadata.create_all(bind=engine)
+
+# Safe column migrations — add missing columns without losing data
+from sqlalchemy import text, inspect
+def _run_migrations():
+    inspector = inspect(engine)
+    existing = {col["name"] for col in inspector.get_columns("members")}
+    with engine.begin() as conn:
+        if "birth_date" not in existing:
+            conn.execute(text("ALTER TABLE members ADD COLUMN birth_date VARCHAR(10)"))
+        if "active" not in existing:
+            conn.execute(text("ALTER TABLE members ADD COLUMN active BOOLEAN NOT NULL DEFAULT true"))
+
+try:
+    _run_migrations()
+except Exception:
+    pass
