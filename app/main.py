@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from app.routes.news import router as news_router
 from app.routes.sponsor import router as sponsor_router
@@ -14,22 +14,21 @@ from app.routes.forum import router as forum_router
 
 from app.db.base import Base
 from app.db.session import engine
-from app.models import image as _image_model  # noqa: F401 — ensures table is created
+from app.models import image as _image_model  # noqa: F401 — registers Image table
 import os
+
+# Garante que o diretório static existe (para compatibilidade com uploads antigos)
+Path("static/uploads").mkdir(parents=True, exist_ok=True)
 
 app = FastAPI()
 
 @app.middleware("http")
 async def trust_coolify_proxy(request: Request, call_next):
-    # O Coolify avisa o FastAPI se a requisição original era HTTPS através desse header
     if request.headers.get("x-forwarded-proto") == "https":
-        # Força o FastAPI a entender que o protocolo interno também é HTTPS
         request.scope["scheme"] = "https"
-    
     response = await call_next(request)
     return response
 
-# Divide a string em uma lista, separando por vírgula
 origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
 allow_origins = origins_env.split(",")
 
@@ -41,6 +40,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve arquivos estáticos legados (uploads antigos que ainda existam)
+from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(auth_router)
