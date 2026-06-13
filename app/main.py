@@ -18,7 +18,9 @@ import os
 
 app = FastAPI()
 
-allow_origins = [os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")]
+# Divide a string em uma lista, separando por vírgula
+origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+allow_origins = origins_env.split(",")
 
 app.add_middleware(
     CORSMiddleware,

@@ -52,7 +52,7 @@ db.refresh(user2)
 
 # ── members (conteúdo público da equipe) ───────────────────────────────────────
 db.add_all([
-    Member(name="Carlos Lima",    role="Capitão",           team="Gestão",    active=True),
+    Member(name="Ad",    role="Capitão",           team="Gestão",    active=True),
     Member(name="Fernanda Costa", role="Engenheira de Motor", team="Powertrain", active=True),
     Member(name="Lucas Martins",  role="Piloto",             team="Pilotagem",  active=True),
     Member(name="Julia Ramos",    role="Designer",           team="Chassis",    active=False),
