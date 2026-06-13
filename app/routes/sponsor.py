@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.sponsor import Sponsor
 from app.schemas.sponsor import SponsorCreate, SponsorResponse
+from app.core.security import require_admin
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/sponsors", tags=["Sponsors"])
@@ -22,7 +23,7 @@ def list_sponsors(db: Session = Depends(get_db), active_only: bool = True):
     return q.order_by(Sponsor.id.desc()).all()
 
 @router.post("", response_model=SponsorResponse)
-def create_sponsor(data: SponsorCreate, db: Session = Depends(get_db)):
+def create_sponsor(data: SponsorCreate, db: Session = Depends(get_db), current_user=Depends(require_admin)):
     sponsor = Sponsor(**data.model_dump())
     db.add(sponsor)
     db.commit()
@@ -44,7 +45,7 @@ def update_sponsor(sponsor_id: int, data: SponsorUpdate, db: Session = Depends(g
     return sponsor
 
 @router.delete("/{sponsor_id}")
-def delete_sponsor(sponsor_id: int, db: Session = Depends(get_db)):
+def delete_sponsor(sponsor_id: int, db: Session = Depends(get_db), current_user=Depends(require_admin)):
     sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
     if not sponsor:
         raise HTTPException(status_code=404, detail="Patrocinador não encontrado")
