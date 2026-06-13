@@ -52,10 +52,81 @@ db.refresh(user2)
 
 # ── members (conteúdo público da equipe) ───────────────────────────────────────
 db.add_all([
-    Member(name="Ad",    role="Capitão",           team="Gestão",    active=True),
-    Member(name="Fernanda Costa", role="Engenheira de Motor", team="Powertrain", active=True),
-    Member(name="Lucas Martins",  role="Piloto",             team="Pilotagem",  active=True),
-    Member(name="Julia Ramos",    role="Designer",           team="Chassis",    active=False),
+    # Capitão
+    Member(name="Adão",               role="Capitão",               team="Projetos",              active=True),
+
+    # Diretores Administrativos
+    Member(name="Clara Aiko",         role="Diretora Administrativa", team="Administrativo",       active=True),
+    Member(name="Daniel",             role="Diretor Administrativo",  team="Administrativo",       active=True),
+
+    # Diretores de Projeto
+    Member(name="Bárbara",            role="Diretora de Projeto",    team="Projetos",              active=True),
+    Member(name="Guilherme",          role="Diretor de Projeto",     team="Projetos",              active=True),
+
+    # Projetista
+    Member(name="Alexandre Lanhoso",  role="Projetista",             team="Projetos",              active=True),
+
+    # Administrativo – D.O.
+    Member(name="Cecília",            role="D.O.",                   team="Administrativo",        active=True),
+    Member(name="Emily",              role="D.O.",                   team="Administrativo",        active=True),
+    Member(name="Luis Henrique",      role="D.O.",                   team="Administrativo",        active=True),
+
+    # Administrativo – Financeiro
+    Member(name="Itallo",             role="Financeiro",             team="Administrativo",        active=True),
+    Member(name="Maria Fernanda",     role="Financeiro",             team="Administrativo",        active=True),
+    Member(name="Pedro Henrique",     role="Financeiro",             team="Administrativo",        active=True),
+
+    # Administrativo – Marketing
+    Member(name="Maria Lívia",        role="Marketing",              team="Administrativo",        active=True),
+    Member(name="Vitória",            role="Marketing",              team="Administrativo",        active=True),
+
+    # Drivetrain
+    Member(name="Ana Luiza",          role="Membro",                 team="Drivetrain",            active=True),
+    Member(name="Artur",              role="Membro",                 team="Drivetrain",            active=True),
+    Member(name="Maria Luiza",        role="Membro",                 team="Drivetrain",            active=True),
+    Member(name="Mozart",             role="Membro",                 team="Drivetrain",            active=True),
+    Member(name="Pedro Reatto",       role="Membro",                 team="Drivetrain",            active=True),
+    Member(name="Ryan",               role="Membro",                 team="Drivetrain",            active=True),
+    Member(name="Yan",                role="Membro",                 team="Drivetrain",            active=True),
+
+    # Elétrica e Telemetria
+    Member(name="Eduardo",            role="Membro",                 team="Elétrica e Telemetria", active=True),
+    Member(name="Fernando",           role="Membro",                 team="Elétrica e Telemetria", active=True),
+    Member(name="Gabriel Rosa",       role="Membro Conselheiro",     team="Elétrica e Telemetria", active=True),
+    Member(name="Gabriel Santos",     role="Membro",                 team="Elétrica e Telemetria", active=True),
+    Member(name="Gustavo Alves",      role="Membro",                 team="Elétrica e Telemetria", active=True),
+    Member(name="Pedro Pompeu",       role="Membro",                 team="Elétrica e Telemetria", active=True),
+
+    # Frame and Body
+    Member(name="Alexandre Elias",    role="Membro",                 team="Frame and Body",        active=True),
+    Member(name="Evellyn",            role="Membro",                 team="Frame and Body",        active=True),
+    Member(name="Felipe",             role="Membro",                 team="Frame and Body",        active=True),
+    Member(name="Guilherme Melo",     role="Membro",                 team="Frame and Body",        active=True),
+    Member(name="Gustavo Pino",       role="Membro",                 team="Frame and Body",        active=True),
+    Member(name="Lucas",              role="Membro",                 team="Frame and Body",        active=True),
+    Member(name="Nicole",             role="Membro",                 team="Frame and Body",        active=True),
+
+    # Freio e Ergonomia
+    Member(name="Ana Laura",          role="Membro",                 team="Freio e Ergonomia",     active=True),
+    Member(name="Gabriel Alteff",     role="Membro",                 team="Freio e Ergonomia",     active=True),
+    Member(name="Gabriel Sansaloni",  role="Membro",                 team="Freio e Ergonomia",     active=True),
+    Member(name="Rubens",             role="Membro",                 team="Freio e Ergonomia",     active=True),
+    Member(name="Samuel",             role="Membro",                 team="Freio e Ergonomia",     active=True),
+    Member(name="Vitor",              role="Membro",                 team="Freio e Ergonomia",     active=True),
+
+    # Powertrain
+    Member(name="Alicia",             role="Membro",                 team="Powertrain",            active=True),
+    Member(name="Gabriel William",    role="Membro",                 team="Powertrain",            active=True),
+    Member(name="Henrique",           role="Membro",                 team="Powertrain",            active=True),
+    Member(name="Ítalo",              role="Membro",                 team="Powertrain",            active=True),
+    Member(name="José Pedro",         role="Membro",                 team="Powertrain",            active=True),
+    Member(name="Rayssa",             role="Membro",                 team="Powertrain",            active=True),
+    Member(name="Thiago",             role="Membro",                 team="Powertrain",            active=True),
+
+    # Suspensão e Direção
+    Member(name="João Inácio",        role="Membro",                 team="Suspensão e Direção",   active=True),
+    Member(name="Rafael",             role="Membro",                 team="Suspensão e Direção",   active=True),
+    Member(name="Sthéfany",           role="Membro",                 team="Suspensão e Direção",   active=True),
 ])
 db.commit()
 
@@ -121,24 +192,14 @@ db.add_all([
 db.commit()
 
 # ── highlights ─────────────────────────────────────────────────────────────────
-db.add_all([
-    Highlight(
-        member_name="Fernanda Costa",
-        member_role="Engenheira de Motor",
-        member_photo=None,
-        area_name="Powertrain",
-        area_desc="Responsável pelo desenvolvimento e otimização do motor da equipe.",
-        area_photo=None,
-    ),
-    Highlight(
-        member_name="Lucas Martins",
-        member_role="Piloto",
-        member_photo=None,
-        area_name="Pilotagem",
-        area_desc="Piloto principal, com foco em telemetria e feedback técnico.",
-        area_photo=None,
-    ),
-])
+db.add(Highlight(
+    member_name="Adão",
+    member_role="Capitão",
+    member_photo=None,
+    area_name="Projetos",
+    area_desc="Responsável pela gestão geral do projeto e liderança da equipe UFU Racing.",
+    area_photo=None,
+))
 db.commit()
 
 # ── forum_posts ────────────────────────────────────────────────────────────────
