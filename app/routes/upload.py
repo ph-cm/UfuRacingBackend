@@ -1,6 +1,8 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+import os
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from pathlib import Path
 from uuid import uuid4
+from app.core.security import get_current_user
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
@@ -10,8 +12,10 @@ MAX_SIZE_MB = 5
 UPLOAD_DIR = Path("static/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
+BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+
 @router.post("")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), current_user=Depends(get_current_user)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="Arquivo inválido")
 
@@ -28,5 +32,4 @@ async def upload_image(file: UploadFile = File(...)):
     dest = UPLOAD_DIR / name
     dest.write_bytes(content)
 
-    # URL pública (você serve /static no main.py)
-    return {"url": f"http://127.0.0.1:8000/static/uploads/{name}"}
+    return {"url": f"{BASE_URL}/static/uploads/{name}"}
