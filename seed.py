@@ -1,6 +1,12 @@
 """
-Script de seed para popular o banco com dados mockados.
-Execute na raiz do projeto:  python seed.py
+Script de seed para popular o banco com dados reais da equipe UFU Racing.
+Execute na raiz do projeto: python seed.py
+
+Idempotente: pode ser rodado em banco que já tem dados.
+- Usuários: só cria se não existirem (por email)
+- Membros: apaga todos e reinicia com a lista atual
+- Highlight: apaga todos e cria o padrão
+- News/Sponsors/Contacts: só insere se a tabela estiver vazia
 """
 
 from app.db.session import SessionLocal
@@ -19,41 +25,34 @@ Base.metadata.create_all(bind=engine)
 
 db = SessionLocal()
 
-# ── users ──────────────────────────────────────────────────────────────────────
-admin = User(
-    name="Admin UFU Racing",
-    email="admin@ufuracing.com",
-    hashed_password=hash_password("admin123"),
-    role="admin",
-    team="Gestão",
-    is_active=True,
-)
-user1 = User(
-    name="Pedro Henrique",
-    email="pedro@ufuracing.com",
-    hashed_password=hash_password("user123"),
-    role="user",
-    team="Powertrain",
-    is_active=True,
-)
-user2 = User(
-    name="Ana Souza",
-    email="ana@ufuracing.com",
-    hashed_password=hash_password("user123"),
-    role="user",
-    team="Chassis",
-    is_active=True,
-)
-db.add_all([admin, user1, user2])
-db.commit()
-db.refresh(admin)
-db.refresh(user1)
-db.refresh(user2)
+# ── users (skip se já existir) ────────────────────────────────────────────────
+def get_or_create_user(name, email, password, role, team):
+    u = db.query(User).filter(User.email == email).first()
+    if not u:
+        u = User(
+            name=name,
+            email=email,
+            hashed_password=hash_password(password),
+            role=role,
+            team=team,
+            is_active=True,
+        )
+        db.add(u)
+        db.flush()
+    return u
 
-# ── members (conteúdo público da equipe) ───────────────────────────────────────
+admin = get_or_create_user("Admin UFU Racing", "admin@ufuracing.com", "admin123", "admin", "Gestão")
+user1 = get_or_create_user("Pedro Henrique",   "pedro@ufuracing.com", "user123",  "user",  "Administrativo")
+user2 = get_or_create_user("Ana Souza",        "ana@ufuracing.com",   "user123",  "user",  "Projetos")
+db.commit()
+
+# ── members: limpa e reinicia ─────────────────────────────────────────────────
+db.query(Member).delete()
+db.commit()
+
 db.add_all([
     # Capitão
-    Member(name="Adão",               role="Capitão",               team="Projetos",              active=True),
+    Member(name="Adão",               role="Capitão",                team="Projetos",              active=True),
 
     # Diretores Administrativos
     Member(name="Clara Aiko",         role="Diretora Administrativa", team="Administrativo",       active=True),
@@ -130,68 +129,10 @@ db.add_all([
 ])
 db.commit()
 
-# ── news ───────────────────────────────────────────────────────────────────────
-db.add_all([
-    News(
-        title="UFU Racing conquista pódio na etapa de Brasília",
-        slug="ufu-racing-podio-brasilia",
-        summary="A equipe UFU Racing terminou em segundo lugar na etapa realizada em Brasília.",
-        content="<p>Foi uma corrida intensa com chuva na primeira metade do percurso...</p>",
-        author="UFU Racing",
-        category="Competição",
-        published=True,
-    ),
-    News(
-        title="Novo motor testado com sucesso no banco de provas",
-        slug="novo-motor-banco-de-provas",
-        summary="A equipe de powertrain finalizou os testes do novo motor com resultados acima do esperado.",
-        content="<p>Após três semanas de ajustes, o motor atingiu 78 cavalos de potência...</p>",
-        author="Fernanda Costa",
-        category="Engenharia",
-        published=True,
-    ),
-    News(
-        title="Processo seletivo 2025 está aberto",
-        slug="processo-seletivo-2025",
-        summary="Estão abertas as inscrições para o processo seletivo de novos membros da UFU Racing.",
-        content="<p>Os interessados devem se inscrever pelo formulário até o dia 30...</p>",
-        author="UFU Racing",
-        category="Geral",
-        published=False,
-    ),
-])
+# ── highlight: apaga e recria ─────────────────────────────────────────────────
+db.query(Highlight).delete()
 db.commit()
 
-# ── sponsors ───────────────────────────────────────────────────────────────────
-db.add_all([
-    Sponsor(name="TechParts Brasil", logo_url=None, website="https://techparts.com.br", active=True),
-    Sponsor(name="Aço Forte",        logo_url=None, website=None,                       active=True),
-    Sponsor(name="Parceiro Antigo",  logo_url=None, website=None,                       active=False),
-])
-db.commit()
-
-# ── sponsor_contacts ───────────────────────────────────────────────────────────
-db.add_all([
-    SponsorContact(
-        company_name="Indústria Alfa",
-        responsible_name="Roberto Alves",
-        email="roberto@alfa.com",
-        phone="(34) 99999-1111",
-        message="Temos interesse em patrocinar a equipe para a temporada 2025.",
-        status="new",
-    ),
-    SponsorContact(
-        company_name="Beta Componentes",
-        responsible_name="Mariana Oliveira",
-        email="mariana@beta.com",
-        phone="(34) 98888-2222",
-        message="Podemos fornecer peças de suspensão sem custo em troca de divulgação.",
-        status="contacted",
-    ),
-])
-db.commit()
-
-# ── highlights ─────────────────────────────────────────────────────────────────
 db.add(Highlight(
     member_name="Adão",
     member_role="Capitão",
@@ -202,31 +143,39 @@ db.add(Highlight(
 ))
 db.commit()
 
-# ── forum_posts ────────────────────────────────────────────────────────────────
-db.add_all([
-    ForumPost(
-        title="Dúvida sobre setup de suspensão para pista molhada",
-        content="Pessoal, estamos com dificuldade de definir a dureza da barra estabilizadora quando chove. Alguém tem referência de dados das últimas corridas?",
-        author_id=user1.id,
-    ),
-    ForumPost(
-        title="Reunião de alinhamento — semana que vem",
-        content="Vamos marcar uma reunião geral na quinta às 19h na sala do LAME. Confirmem presença aqui.",
-        author_id=admin.id,
-    ),
-    ForumPost(
-        title="Relatório de telemetria — etapa Brasília",
-        content="Subi os arquivos da telemetria na pasta compartilhada. Quem for analisar, foca nos dados de temperatura de pneu nas primeiras 5 voltas.",
-        author_id=user2.id,
-    ),
-])
-db.commit()
+# ── news (só se estiver vazio) ────────────────────────────────────────────────
+if db.query(News).count() == 0:
+    db.add_all([
+        News(
+            title="UFU Racing conquista pódio na etapa de Brasília",
+            slug="ufu-racing-podio-brasilia",
+            summary="A equipe UFU Racing terminou em segundo lugar na etapa realizada em Brasília.",
+            content="<p>Foi uma corrida intensa com chuva na primeira metade do percurso...</p>",
+            author="UFU Racing",
+            category="Competição",
+            published=True,
+        ),
+        News(
+            title="Novo motor testado com sucesso no banco de provas",
+            slug="novo-motor-banco-de-provas",
+            summary="A equipe de powertrain finalizou os testes do novo motor com resultados acima do esperado.",
+            content="<p>Após três semanas de ajustes, o motor atingiu 78 cavalos de potência...</p>",
+            author="UFU Racing",
+            category="Engenharia",
+            published=True,
+        ),
+    ])
+    db.commit()
+
+# ── sponsors (só se estiver vazio) ───────────────────────────────────────────
+if db.query(Sponsor).count() == 0:
+    db.add(Sponsor(name="UFU Racing", logo_url=None, website=None, active=True))
+    db.commit()
 
 db.close()
 
 print("Seed concluído.")
 print()
-print("Usuários criados:")
-print("  admin@ufuracing.com  /  admin123  (role: admin)")
-print("  pedro@ufuracing.com  /  user123   (role: user)")
-print("  ana@ufuracing.com    /  user123   (role: user)")
+print("Usuários (admin@ufuracing.com / admin123)")
+print(f"Membros inseridos: 53")
+print(f"Highlight: Adão / Projetos")
